@@ -143,6 +143,28 @@
       opacity: 0.9;
     }
 
+    button.btn-generate:disabled {
+      background: #484f58;
+      cursor: not-allowed;
+    }
+
+    #result {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #result img {
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+
+    .loading {
+      color: #8b949e;
+      font-style: italic;
+      font-size: 14px;
+    }
+
     footer {
       margin-top: 30px;
       text-align: center;
@@ -174,7 +196,9 @@
         <input type="file" id="file" accept="image/*" style="display: none;">
       </div>
 
-      <button class="btn-generate" onclick="alert('Conectando backend...')">Generar Foto (1 Crédito)</button>
+      <button id="btnGen" class="btn-generate" onclick="generarImagen()">Generar Foto (1 Crédito)</button>
+
+      <div id="result"></div>
     </div>
 
     <footer>
@@ -182,5 +206,43 @@
     </footer>
   </div>
 
+  <script>
+    async function generarImagen() {
+      const prompt = document.getElementById('prompt').value;
+      const resultDiv = document.getElementById('result');
+      const btn = document.getElementById('btnGen');
+
+      if (!prompt.trim()) {
+        alert('Por favor escribe una descripción para la foto.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Generando magia... ⏳';
+      resultDiv.innerHTML = '<p class="loading">Procesando imagen hiperrealista, esto puede tomar unos segundos...</p>';
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          resultDiv.innerHTML = `<p style="color: #ff7b72;">Error: ${data.error}</p>`;
+        } else {
+          resultDiv.innerHTML = `<img src="${data.image}" alt="Foto Generada">`;
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color: #ff7b72;">Error al conectar con el servidor.</p>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Generar Foto (1 Crédito)';
+      }
+    }
+  </script>
+
 </body>
-</html>
+  </html>
