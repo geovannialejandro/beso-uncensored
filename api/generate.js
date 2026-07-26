@@ -1,37 +1,44 @@
+import Replicate from "replicate";
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Solo se permite POST" });
   }
-
-  const { prompt } = req.body;
-
-  if (!prompt) {
-    return res.status(400).json({ error: 'El prompt es obligatorio' });
-  }
-
-  const MODEL_ID = "black-forest-labs/FLUX.1-schnell";
 
   try {
-    const response = await fetch(`https://api-inference.huggingface.co/models/${MODEL_ID}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.HF_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ inputs: prompt }),
-    });
+    const { prompt } = req.body;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(500).json({ error: 'Error en Hugging Face: ' + errorText });
+    if (!prompt) {
+      return res.status(400).json({ error: "Falta el prompt" });
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const base64Image = Buffer.from(arrayBuffer).toString('base64');
-    const imageUrl = `data:image/jpeg;base64,${base64Image}`;
+    const output = await replicate.run(
+      "black-forest-labs/flux-schnell",
+      {
+        input: {
+          prompt: prompt,
+          num_outputs: 1,
+          aspect_ratio: "1:1",
+          output_format: "webp",
+          output_quality: 90
+        }
+      }
+    );
 
-    return res.status(200).json({ image: imageUrl });
+    res.status(200).json({
+      success: true,
+      image: output[0]
+    });
+
   } catch (error) {
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Error al generar la imagen"
+    });
   }
 }
