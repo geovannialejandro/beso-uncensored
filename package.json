@@ -2,5 +2,7 @@
   "name": "beso-uncensored",
   "version": "1.0.0",
   "type": "module",
-  "dependencies": {}
+  "dependencies": {
+    "@gradio/client": "^1.11.0"
+  }
 }
